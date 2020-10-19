@@ -10,6 +10,7 @@
         android:icon="@drawable/logo"
         android:label="Artify"
         android:roundIcon="@mipmap/logo_round"
+        android:requestLegacyExternalStorage="true"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity android:name="com.ephemeral.artify.SplashScreen">
@@ -19,7 +20,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".StyleSelection" />
         <activity android:name="com.ephemeral.artify.FinalActivity" />
         <activity android:name="com.ephemeral.artify.MainActivity">
 

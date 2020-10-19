@@ -69,26 +69,20 @@ class StyleTransferModelExecutor(
             preProcessTime = SystemClock.uptimeMillis()
 
             val contentImage = ImageUtils.decodeBitmap(File(contentImagePath),exif,bitmap)
-            Log.d("aa","1")
             val contentArray =
                 ImageUtils.bitmapToByteBuffer(contentImage, CONTENT_IMAGE_SIZE, CONTENT_IMAGE_SIZE)
-            Log.d("aa","2")
 
             if(bitmap_style != null){
                 styleBitmap = bitmap_style
             }else{
                 styleBitmap = ImageUtils.loadBitmapFromResources(context, "thumbnails/$styleImageName")
             }
-            Log.d("aa","3")
 
             val input = ImageUtils.bitmapToByteBuffer(styleBitmap, STYLE_IMAGE_SIZE, STYLE_IMAGE_SIZE)
-            Log.d("aa","4")
 
             val inputsForPredict = arrayOf<Any>(input)
-            Log.d("aa","5")
 
             val outputsForPredict = HashMap<Int, Any>()
-            Log.d("aa","6")
 
             val styleBottleneck = Array(1) { Array(1) { Array(1) { FloatArray(BOTTLENECK_SIZE) } } }
             outputsForPredict[0] = styleBottleneck
@@ -101,7 +95,6 @@ class StyleTransferModelExecutor(
             stylePredictTime = SystemClock.uptimeMillis() - stylePredictTime
             Log.d(TAG, "Style Predict Time to run: $stylePredictTime")
 
-            Log.d("aa","33")
 
             val inputsForStyleTransfer = arrayOf(contentArray, styleBottleneck)
             val outputsForStyleTransfer = HashMap<Int, Any>()
@@ -109,7 +102,6 @@ class StyleTransferModelExecutor(
                 Array(1) { Array(CONTENT_IMAGE_SIZE) { Array(CONTENT_IMAGE_SIZE) { FloatArray(3) } } }
             outputsForStyleTransfer[0] = outputImage
 
-            Log.d("aa","11")
 
             styleTransferTime = SystemClock.uptimeMillis()
             interpreterTransform.runForMultipleInputsOutputs(
@@ -117,7 +109,6 @@ class StyleTransferModelExecutor(
                 outputsForStyleTransfer
             )
 
-            Log.d("aa","22")
 
             styleTransferTime = SystemClock.uptimeMillis() - styleTransferTime
             Log.d(TAG, "Style apply Time to run: $styleTransferTime")

@@ -11,6 +11,9 @@ import android.database.Cursor
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.Matrix
+import android.graphics.drawable.Drawable
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -22,6 +25,7 @@ import android.view.View
 import android.view.WindowManager
 import android.view.animation.AnimationUtils
 import android.widget.*
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
 import androidx.core.app.ActivityCompat
@@ -33,6 +37,7 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool
 import com.bumptech.glide.load.resource.bitmap.BitmapTransformation
 import com.bumptech.glide.request.RequestOptions
+import com.bumptech.glide.request.target.CustomTarget
 import com.google.android.gms.ads.*
 import com.google.android.material.snackbar.Snackbar
 import java.io.IOException
@@ -140,9 +145,9 @@ class MainActivity : AppCompatActivity(),StyleFragment.OnListFragmentInteraction
 
         //content image listener
         content_img?.setOnClickListener(View.OnClickListener {
-            if (checkPermissionREAD_EXTERNAL_STORAGE(this)) {
-                pickImageFromGallery()
-            }
+            //if (checkPermissionREAD_EXTERNAL_STORAGE(this)) {
+            pickImageFromGallery()
+            //}
         })
 
         //style image listener
@@ -153,15 +158,36 @@ class MainActivity : AppCompatActivity(),StyleFragment.OnListFragmentInteraction
     }
 
 
-    @Throws(InterruptedException::class, IOException::class)
-    fun isConnected(): Boolean {
-        val command = "ping -c 1 google.com"
-        return Runtime.getRuntime().exec(command).waitFor() == 0
+    fun isConnected(context: Context): Boolean {
+        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        if (connectivityManager != null) {
+            val capabilities =
+                connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
+            if (capabilities != null) {
+                if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)) {
+                    Log.i("Internet", "NetworkCapabilities.TRANSPORT_CELLULAR")
+                    return true
+                } else if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
+                    Log.i("Internet", "NetworkCapabilities.TRANSPORT_WIFI")
+                    return true
+                } else if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)) {
+                    Log.i("Internet", "NetworkCapabilities.TRANSPORT_ETHERNET")
+                    return true
+                }
+            }
+        }
+        return false
     }
+
+
+
+
+
+
 
     private fun xx(){
         forward_anim.setOnClickListener(View.OnClickListener {
-            if (isConnected()) {
+            if (isConnected(this)) {
                 val animat = AnimationUtils.loadAnimation(this, R.anim.tick_out)
                 forward_anim.animation = animat
                 Handler(Looper.getMainLooper()).postDelayed({
@@ -242,6 +268,7 @@ class MainActivity : AppCompatActivity(),StyleFragment.OnListFragmentInteraction
         })
 
     }
+
     private fun pickImageFromGallery(){
         val intent = Intent(Intent.ACTION_PICK)
         intent.type = "image/*"
@@ -257,16 +284,34 @@ class MainActivity : AppCompatActivity(),StyleFragment.OnListFragmentInteraction
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if(resultCode == Activity.RESULT_OK && requestCode == 1000){
-            card_content.layoutParams = FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.MATCH_PARENT,
-                FrameLayout.LayoutParams.MATCH_PARENT
-            )
             //card_content.setImageURI(data?.data)
-            bmp_w_h = MediaStore.Images.Media.getBitmap(this.contentResolver, data?.data)
+            /*bmp_w_h = MediaStore.Images.Media.getBitmap(this.contentResolver, data?.data)
             val bitmap_content = modifyOrientation(bmp_w_h, getImagePath(data?.data))
             bmp_w_h = bitmap_content!!
-            card_content.setImageBitmap(bitmap_content)
-            card_content.setColorFilter(Color.argb(0, 255, 255, 255))
+            card_content.setImageBitmap(bitmap_content)*/
+
+
+            Glide.with(this)
+                .asBitmap()
+                .load(data?.data)
+                .into(object : CustomTarget<Bitmap>() {
+                    override fun onResourceReady(
+                        resource: Bitmap,
+                        transition: com.bumptech.glide.request.transition.Transition<in Bitmap>?
+                    ) {
+                        card_content.setColorFilter(Color.argb(0, 255, 255, 255))
+                        card_content.layoutParams = FrameLayout.LayoutParams(
+                            FrameLayout.LayoutParams.MATCH_PARENT,
+                            FrameLayout.LayoutParams.MATCH_PARENT
+                        )
+                        card_content.setImageBitmap(resource)
+                        bmp_w_h = resource
+                    }
+
+                    override fun onLoadCleared(placeholder: Drawable?) {
+                    }
+                })
+
             passing_contentstr = (data?.data).toString()
             passing_content = data?.data
             tick_content?.playAnimation()
@@ -284,10 +329,15 @@ class MainActivity : AppCompatActivity(),StyleFragment.OnListFragmentInteraction
                 FrameLayout.LayoutParams.MATCH_PARENT,
                 FrameLayout.LayoutParams.MATCH_PARENT
             )
-            val bmp_style = MediaStore.Images.Media.getBitmap(this.contentResolver, data?.data)
+            /*val bmp_style = MediaStore.Images.Media.getBitmap(this.contentResolver, data?.data)
             val bitmap_content = modifyOrientation(bmp_style, getImagePath(data?.data))
             card_style.setImageBitmap(bitmap_content)
-            //card_style.setImageURI(data?.data)
+            //card_style.setImageURI(data?.data)*/
+
+            Glide.with(baseContext)
+                .load(data?.data)
+                .into(card_style)
+
             tick_style?.playAnimation()
             click_style?.visibility = View.INVISIBLE
             passStyle = (data?.data).toString()
@@ -322,9 +372,9 @@ class MainActivity : AppCompatActivity(),StyleFragment.OnListFragmentInteraction
         selectedStyle = item
         stylesFragment.dismiss()
         if(item.equals("galleryf.jpg")){
-            if (checkPermissionREAD_EXTERNAL_STORAGE(this)) {
+            //if (checkPermissionREAD_EXTERNAL_STORAGE(this)) {
             pickStyleFromGallery()
-            }
+            //}
         }
         else{
             setImageView(card_style, getUriFromAssetThumb(selectedStyle))
@@ -423,9 +473,7 @@ class MainActivity : AppCompatActivity(),StyleFragment.OnListFragmentInteraction
 
     val MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE = 123
 
-    fun checkPermissionREAD_EXTERNAL_STORAGE(
-        context: Context?
-    ): Boolean {
+    fun checkPermissionREAD_EXTERNAL_STORAGE(context: Context?): Boolean {
         val currentAPIVersion = Build.VERSION.SDK_INT
         return if (currentAPIVersion >= Build.VERSION_CODES.M) {
             if (ContextCompat.checkSelfPermission(
@@ -460,10 +508,7 @@ class MainActivity : AppCompatActivity(),StyleFragment.OnListFragmentInteraction
     }
 
 
-    fun showDialog(
-        msg: String, context: Context?,
-        permission: String
-    ){
+    fun showDialog(msg: String, context: Context?, permission: String){
         val alertBuilder: AlertDialog.Builder = AlertDialog.Builder(context)
         alertBuilder.setCancelable(true)
         alertBuilder.setTitle("Permission necessary")

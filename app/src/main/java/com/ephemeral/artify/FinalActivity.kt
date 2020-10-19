@@ -1,6 +1,7 @@
 package com.ephemeral.artify
 
 import android.Manifest
+import android.app.Activity
 import android.content.ContentValues
 import android.content.pm.PackageManager
 import android.database.Cursor
@@ -101,6 +102,8 @@ class FinalActivity : AppCompatActivity() {
             this.finish()
         })
 
+        verifyStoragePermissions(this)
+
 
 
         passed_content = intent.getStringExtra("passContent")
@@ -115,11 +118,7 @@ class FinalActivity : AppCompatActivity() {
 
 
         save_img.setOnClickListener(View.OnClickListener {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && ActivityCompat.checkSelfPermission(
-                    baseContext, android.Manifest.permission.WRITE_EXTERNAL_STORAGE
-                )
-                == PackageManager.PERMISSION_GRANTED
-            ) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && ActivityCompat.checkSelfPermission(baseContext, android.Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
                 if(resultImageView.drawable != null)
                 saveImage(res.styledImage)
             } else {
@@ -129,7 +128,6 @@ class FinalActivity : AppCompatActivity() {
                 )
             }
         })
-
 
 
         input = contentResolver.openInputStream(Uri.parse(passed_content))!!
@@ -166,7 +164,6 @@ class FinalActivity : AppCompatActivity() {
 
 
     }
-
 
 
     private fun startRunningModel(trigger: Boolean) {
@@ -284,6 +281,10 @@ class FinalActivity : AppCompatActivity() {
             var title = random()
             var myDir = File(Environment.getExternalStorageDirectory().path + "/Pictures" + "/Artify"+title+".jpg")
             val list = myDir.list()
+            val picturesDir = File(Environment.getExternalStorageDirectory().path + "/Pictures")
+            if(!picturesDir.exists()){
+                picturesDir.mkdir();
+            }
             if(myDir.exists()){
                 title = random()
                 myDir = File(Environment.getExternalStorageDirectory().path + "/Pictures" + "/Artify"+title+".jpg")
@@ -340,10 +341,32 @@ class FinalActivity : AppCompatActivity() {
         }
     }
 
+
+    private val REQUEST_EXTERNAL_STORAGE = 1
+    private val PERMISSIONS_STORAGE = arrayOf(
+        Manifest.permission.READ_EXTERNAL_STORAGE,
+        Manifest.permission.WRITE_EXTERNAL_STORAGE
+    )
+    fun verifyStoragePermissions(activity: Activity?) {
+        // Check if we have write permission
+        val permission = ActivityCompat.checkSelfPermission(
+            activity!!,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE
+        )
+        if (permission != PackageManager.PERMISSION_GRANTED) {
+            // We don't have permission so prompt the user
+            ActivityCompat.requestPermissions(
+                activity,
+                PERMISSIONS_STORAGE,
+                REQUEST_EXTERNAL_STORAGE
+            )
+        }
+    }
+
     fun random(): String? {
         val generator = Random()
         val randomStringBuilder = StringBuilder()
-        val randomLength: Int = generator.nextInt(100)
+        val randomLength: Int = generator.nextInt(10)
         var tempChar: Char
         for (i in 0 until randomLength) {
             tempChar = (generator.nextInt(96) + 32).toChar()
