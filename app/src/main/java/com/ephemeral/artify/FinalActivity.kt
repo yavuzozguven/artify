@@ -297,7 +297,6 @@ class FinalActivity : AppCompatActivity() {
             fOut.flush()
             fOut.close()
 
-            Log.d("aa", path)
             val values = ContentValues()
             values.put(MediaStore.Images.Media.TITLE, "Artify")
             values.put(MediaStore.Images.Media.DESCRIPTION, title)
